@@ -1,0 +1,4 @@
+.idea
+local.env
+django-app/db.sqlite3
+__pycache__
