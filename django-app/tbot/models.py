@@ -6,13 +6,11 @@ import logging
 Хранилище информации об объекте недвижимости
 """
 
-
-
 class Estate(models.Model):
     estate_code = models.CharField(max_length=255, null=False, default="")
     _total_real_space = models.FloatField(null=True)
-    users_and_weights = models.TextField(default="[]") # NOTICE: вот это трэш, надо по-хорошему сохранять в более приличном виде
-    # TODO: вообще вот эту связь пользователей с недвижкой через веса надо тоже превратить в модель!
+
+    # TODO: when editing Estate — should show warning, if Estateownings has not enough space to fill _total_real_space (обрати внимание, что это сравнение float-ов!)
 
     def get_total_weight(self) -> float:
         sum_weight = 0.0
@@ -26,11 +24,40 @@ class Estate(models.Model):
                 return uw['weight']
 
     def _get_users_and_weights(self) -> list:
-        return json.loads(self.users_and_weights)
+        estate_ownings = Estateowning.objects.filter(estate=self)
+        result = []
+        for estate_owning in estate_ownings:
+            result.append({
+                "user_id": estate_owning.user_id,
+                "weight": estate_owning.owning_weight
+            })
+        return result
 
     def _set_users_and_weights(self, users_and_weights) -> None:
-        self.users_and_weights = json.dumps(users_and_weights)
-        self.save()
+        # Получить полный список, чтобы потом узнать что нужно удалять
+        ids_before = []
+        for eo in Estateowning.objects.filter(estate=self):
+            ids_before.append(eo.id)
+
+        # Изменить что изменилось
+        # Добавить что добавилось
+        for uw in users_and_weights:
+            try:
+                estate_owning = Estateowning.objects.get(estate=self, user_id=int(uw['user_id']))
+                estate_owning.owning_weight = float(uw['weight'])
+                estate_owning.save()
+                ids_before.remove(estate_owning.id)
+            except Estateowning.DoesNotExist:
+                eo = Estateowning(
+                    user_id=int(uw['user_id']),
+                    estate=self,
+                    owning_weight=float(uw['weight'])
+                )
+                eo.save()
+
+        # Удалить что удалилось
+        for id in ids_before:
+            Estateowning.objects.get(id=id).delete()
 
 """
 Подъезд, для которого есть отдельный чат
@@ -42,11 +69,9 @@ class Section(models.Model):
     title = models.CharField(max_length=255, null=False, default="[unknown]")
 
     def get_chat_id(self):
-        #TODO: захардкодить инфу по этой секции, у нас только одна сейчас
         return self.chat_id
 
     def get_title(self):
-        #TODO: захардкодить инфу по этой секции, у нас только одна сейчас
         return self.title
 
 """
@@ -57,12 +82,22 @@ class Section(models.Model):
 
 class User(models.Model):
     user_id = models.BigIntegerField(null=False)
-    personal_chat_id = models.BigIntegerField(null=True) # TODO: надо как-то обогащать данные если их нет. Юзера могут создать когда проголосовали.
     name = models.CharField(max_length=255, null=False)
     verified = models.BooleanField(default=False)
 
     def is_verified(self):
         return self.verified
+
+
+"""
+У кого какие доли в объектах недвижимости
+"""
+
+
+class Estateowning(models.Model):
+    estate = models.ForeignKey(Estate, null=True, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, null=True, on_delete=models.DO_NOTHING)
+    owning_weight = models.FloatField(null=True)
 
 
 """
@@ -171,35 +206,4 @@ class Vote(models.Model):
 
     def get_selected_vote_id(self):
         return self.selected_vote_id
-
-
-"""
-Хранилище всех голосов пользователей по какому-то из опросов
-
-
-class Eossstats(models.Model):
-    estate = models.ForeignKey(Estate, null=True, on_delete=models.CASCADE)
-    poll = models.OneToOneField(Poll, null=True, on_delete=models.DO_NOTHING)
-
-    # weight float
-    # vote Vote() object
-    def __init__(self, estate: Estate, weight: float, vote: Vote):
-        pass
-
-    def get_votes(self):
-        return [Vote(), Vote(), Vote()]
-
-    def get_estate_id(self):
-        return 12123
-
-    def get_weight(self):
-        return 1231.1
-
-    def get_vote_label(self):
-        return "asdadasdada"
-
-    def get_sum_for_option(self, option_string: str):
-        # TODO: run through all Vote() objects and summ all weights
-        pass
-"""
 

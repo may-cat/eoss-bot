@@ -3,7 +3,7 @@ from tbot.models import *
 
 @admin.register(Estate)
 class EstateAdmin(admin.ModelAdmin):
-    list_display = ('estate_code','users_and_weights','_total_real_space')
+    list_display = ('estate_code','_total_real_space')
 
 
 @admin.register(Section)
@@ -13,6 +13,11 @@ class SectionAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('user_id','personal_chat_id','name','verified')
+    list_display = ('user_id','name','verified')
+
+
+@admin.register(Estateowning)
+class EstateowningAdmin(admin.ModelAdmin):
+    list_display = ('estate','user','owning_weight')
 
 
