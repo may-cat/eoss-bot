@@ -6,3 +6,13 @@ tests-app/*.session
 tests-app/*.session-journal
 tests-app/.pytest_cache
 config.md
+*.pyc
+
+# IDE
+.idea
+.vscode
+
+# Django
+django-app/db.sqlite3
+
+
