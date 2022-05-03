@@ -1,6 +1,5 @@
 import os, django
 
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dtb.settings')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tenants.settings")
 django.setup()
 
