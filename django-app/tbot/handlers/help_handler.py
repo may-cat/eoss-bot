@@ -19,9 +19,17 @@ from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler
 )
+from ..lib.handler import TGHandler
 
 
-def help_handler(update: Update, context: CallbackContext) -> None:
-    """Display a help message"""
-    update.message.reply_text("Use /quiz, /poll or /preview to test this bot.")
+class Help(TGHandler):
+    def handler_verified_users_only(self):
+        return False
 
+    def handler_private_chats_only(self) ->bool:
+        return False
+
+    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+        chat_id = update.message.chat_id
+
+        update.message.reply_text("По всем вопросам пишите @i_tsupko")

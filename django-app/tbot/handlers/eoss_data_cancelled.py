@@ -20,22 +20,21 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from ..helpers.telegramchats import Telegramchats
+from ..lib.handler import TGHandler
 
 
-def eoss_data_cancelled(update: Update, context: CallbackContext) -> None:
-    """
-    Cancel EOSS draft
-    :param update:
-    :param context:
-    :return:
-    """
-    chat_id = update.message.chat_id
-    if not Telegramchats.is_private_chat(update):
-        return
-    context.bot.send_message(
-        chat_id,
-        "Сорян, это ещё не реализовали :) ",
-        parse_mode=ParseMode.HTML
-    )
+class EossDataCancelled(TGHandler):
+    def handler_verified_users_only(self):
+        return True
 
-    # TODO: cancel scenario!
+    def handler_private_chats_only(self) ->bool:
+        return True
+
+    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+        chat_id = update.message.chat_id
+
+        context.bot.send_message(
+            chat_id,
+            "Сорян, это ещё не реализовали :) ",
+            parse_mode=ParseMode.HTML
+        )
