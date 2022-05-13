@@ -24,6 +24,9 @@ from telegram.ext import (
 from ..message_templates.message_templates import _need_verifiication, _need_eoss_start
 from ..helpers.telegramchats import Telegramchats
 from ..models import *
+from ..exceptions.needs_verification import UserNeedsVerification
+from ..exceptions.scenario_failed import ScenarioFailed
+from ..exceptions.contact_admin import ContactAdmin
 
 from ..convmachine import ConversationMachine
 
@@ -57,17 +60,14 @@ class TGHandler():
         return True
 
     def _process_user_verification_check(self, user: User) -> None:
+        verification_pending = True
         if not user.is_verified():
             verification_pending = False # TODO: это надо брать из базы откуда-то
 
         if verification_pending:
-            # TODO: отправляем сообщение, что мол ждите, админ вас вот-вот заапрувит, контакты для связи с админом вот такие
-            pass
+            raise ContactAdmin()
         else:
-            # TODO: отправляем пользователю инфу, что он должен прислать инфу о своём объекте недвижимости
-            pass
-
-        raise Exception("Пользователь ещё не аппрувлен") # TODO: сделать кастомный тип эксепшна
+            raise UserNeedsVerification()
 
     def _process_is_private_chat_check(self, update: Update) -> None:
         pass
@@ -76,11 +76,7 @@ class TGHandler():
         # TODO: add logging
         user = self._get_user(update, context)
         if not self._if_can_proceed(user):
-            """
-            TODO: тут какой-то штук, что мол юзер не может продолжать потому что сломался сценарий.
-            Наверное надо кидать ему сообщение об этом и выкидывать в основное меню
-            """
-            pass
+            raise ScenarioFailed()
 
         # Check if user may use the bot
         if self.handler_verified_users_only():

@@ -1,0 +1,2 @@
+class UserNeedsVerification(Exception):
+    pass

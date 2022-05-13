@@ -1,0 +1,2 @@
+class ContactAdmin(Exception):
+    pass
