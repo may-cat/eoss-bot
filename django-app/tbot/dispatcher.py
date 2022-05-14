@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def run_bot():
     updater = Updater(API_KEY)
     dispatcher = updater.dispatcher
-    conv_machine = ConversationMachine(states = {})
+    conv_machine = ConversationMachine()
     conv_machine.register_handlers(dispatcher)
 
     # TODO: ещё тут надо как-то ловить событие, что юзера подтвердили и отправлять ему сообщение

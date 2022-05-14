@@ -37,6 +37,7 @@ from exceptions.needs_verification import UserNeedsVerification
 from exceptions.scenario_failed import ScenarioFailed
 from exceptions.contact_admin import ContactAdmin
 import jmespath
+from helpers.telegramchats import Telegramchats
 
 
 class ConversationMachine():
@@ -48,24 +49,7 @@ class ConversationMachine():
     }
 
     states = {}
-
-    """
-    Scenarios runned on exceptions
-    """
-    fallbacks = {
-        UserNeedsVerification: {
-            'function': ReceiveVerificationRequest.handle,
-        },
-        ScenarioFailed: {
-            # TODO: ....
-        },
-        ContactAdmin: {
-            'function': Help.handle
-        },
-        Exception: {
-            'function': Help.handle
-        }
-    }
+    fallbacks = {}
 
     def __init__(self):
         """
@@ -143,7 +127,25 @@ class ConversationMachine():
             1: {
                 'class': CommandHandler,
                 'filter': 'help',
-                'function': Help(self)
+                'handler': Help(self)
+            }
+        }
+
+        """
+        Scenarios runned on exceptions
+        """
+        self.fallbacks = {
+            UserNeedsVerification: {
+                'handler': ReceiveVerificationRequest(self),
+            },
+            ScenarioFailed: {
+                # TODO: ....
+            },
+            ContactAdmin: {
+                'handler': Help(self)
+            },
+            Exception: {
+                'handler': Help(self)
             }
         }
 
@@ -155,29 +157,33 @@ class ConversationMachine():
     """
     def register_handlers(self, dispatcher: Dispatcher):
         dispatcher.add_handler(MessageHandler(self._custom_message_handler))
-        dispatcher.add_handler(CommandHandler(eoss_data_received)) # TODO: ...
-        dispatcher.add_handler(PollAnswerHandler(eoss_data_received)) # TODO: ...
+        dispatcher.add_handler(CommandHandler(self._custom_command_handler))
+        dispatcher.add_handler(PollAnswerHandler(self._custom_poll_answer_handler))
 
     def _custom_message_handler(self, update: Update, context: CallbackContext) -> None:
         self._basic_handler(update, context, MessageHandler)
 
-    def _basic_handler(self, update: Update, context: CallbackContext, handler_type):
-        # TODO: загружаем юзера
-        user = User()
+    def _custom_command_handler(self, update: Update, context: CallbackContext) -> None:
+        self._basic_handler(update, context, CommandHandler)
 
+    def _custom_poll_answer_handler(self, update: Update, context: CallbackContext) -> None:
+        self._basic_handler(update, context, PollAnswerHandler)
+
+    def _basic_handler(self, update: Update, context: CallbackContext, handler_type):
+        user = self._get_user(update, context)
         try:
             user_state = user.get_dialog_state()
+                                            # TODO: а как быть когда человек прошёл всё и должен быть в стейте "я в главном меню"?
             for path, possible_state in self._get_next_possible_states(user_state, handler_type).items():
                 if possible_state['filter'](update): # TODO: это сломается когда filter будет не указан, либо когда он будет строкой, а не объектом
-                    possible_state['function'](update, context, user)
+                    possible_state['handler'].handle(update=update, context=context, user=user)
                     user.set_dialog_state(path)
                     return
             raise ScenarioFailed()
         except Exception as e:
             for exception_type in self.fallbacks.keys():
                 if isinstance(e, exception_type):
-                    self.fallbacks[exception_type]['function'](update=update, context=context)
-                    pass
+                    self.fallbacks[exception_type]['handler'].handle(update=update, context=context, user=user)
 
     """
     Возвращает какие шаги дальше могут быть
@@ -191,3 +197,16 @@ class ConversationMachine():
             if next_state['class'] == handler_type:
                 result[item] = next_state
         return result
+
+    def _get_user(self, update: Update, context: CallbackContext) -> User:
+        user_id = Telegramchats.get_user_id(update)
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            user = User(
+                user_id=user_id,
+                name="", # TODO: set the goddamn name!
+                verified=False
+            )
+            user.save()
+        return user
