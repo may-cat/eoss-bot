@@ -117,30 +117,37 @@ class ConversationMachine():
         user = User()
 
         try:
-            user_state = self._get_user_state(user) # TODO: а вот тут надо как-то учесть, что юзер стейт мы сохранили прошлый, а теперь следующий, а он вообще говоря не однозначный
-            if not user_state.message_matches_state(update, context):
+            user_state = self._get_user_state(user)
+
+            called = False
+            for possible_state in self._get_next_possible_states(self.states, user_state):
+                if self._does_message_match_state(update, context, possible_state):
+                    self._run_state(update, context, possible_state)
+                    called = True
+            if not called:
                 raise ScenarioFailed()
-
-            # TODO тут как-то надо выбрать правильный метод который дёрнуть и которому уже передать
-
-
-
-
-
-            """
-            TODO:
-                    Надо будет заюзать:
-                    https://stackoverflow.com/questions/2654113/how-to-get-the-callers-method-name-in-the-called-method
-                    На основании имени метода, который вызвал, сценария в self.states и состояния текущего юзера — надо понять можно ли продолжать
-            :return:
-            """
-
-            pass
         except Exception as e:
             for exception_type in self.fallbacks.keys():
                 if isinstance(e, exception_type):
                     self.fallbacks[exception_type]['function'](update=update, context=context)
                     pass
 
-    def _get_user_state(self, user) -> UserState:
-        pass
+    def _get_user_state(self, user):
+        # TODO: прочитать юзера, его свойство
+        # TODO: проверить, что значения в свойстве хоть как-то укладывается в self.state, если нет — откатываем на какое-то другое состояние
+        # TODO: превратить в UserState объект
+
+        return ['start', 1]
+
+    def _get_next_possible_states(self):
+        return [
+            { 'class': MessageHandler, 'filter': Filters.regex(BUTTON_RUN),               'function': EossDataRecieved.handle },
+            { 'class': MessageHandler, 'filter': Filters.regex(BUTTON_CANCEL),            'function': EossDataCancelled.handle },
+        ]
+
+    def _does_message_match_state(self, update: Update, context: CallbackContext, state) -> bool:
+        # TODO: ....
+        return True
+
+    def _run_state(self, update: Update, context: CallbackContext, state) -> None:
+         pass
