@@ -84,9 +84,21 @@ class User(models.Model):
     user_id = models.BigIntegerField(null=False)
     name = models.CharField(max_length=255, null=False)
     verified = models.BooleanField(default=False)
+    dialog_state = models.CharField(max_length=255, null=False)
+    """
+    Возвращает свойство пользователя, которое на самом деле является путём в массиве ConvMachine.states.
+    Значение свойства соответствует формату библиотеки jmespath
+    """
 
     def is_verified(self):
         return self.verified
+
+    def get_dialog_state(self):
+        return self.dialog_state
+
+    def set_dialog_state(self, state):
+        self.dialog_state = state
+        self.save()
 
 
 """
