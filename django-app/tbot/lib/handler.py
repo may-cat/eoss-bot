@@ -37,9 +37,6 @@ class TGHandler():
     def __init__(self, conversation_machine: ConversationMachine):
         self.conversation_machine = conversation_machine
 
-    def _if_can_proceed(self, user: User):
-        return self.conversation_machine.can_proceed(user)
-
     def _get_user(self, update: Update, context: CallbackContext) -> User:
         user_id = Telegramchats.get_user_id(update)
         try:
@@ -75,8 +72,6 @@ class TGHandler():
     def handle(self, update: Update, context: CallbackContext) -> None:
         # TODO: add logging
         user = self._get_user(update, context)
-        if not self._if_can_proceed(user):
-            raise ScenarioFailed()
 
         # Check if user may use the bot
         if self.handler_verified_users_only():

@@ -47,35 +47,7 @@ class ConversationMachine():
         "LABEL_CHANGE_MY_PROPERTY": 'Изменить свои объекты недвижимости'
     }
 
-    """
-    Scenarios
-    """
-    states = {
-        'start': {
-            1: { 'class': CommandHandler, 'filter': 'start', 'function': Start.handle }
-        },
-        'eoss_initiate': {
-            1: { 'class': MessageHandler, 'filter': Filters.regex(menu['LABEL_EOSS_START']), 'function': Eoss.handle , 'next_possible': ['eoss_initiate.4','eoss_initiate.5'] },
-            2: { 'class': MessageHandler, 'filter': Filters.poll,                            'function': ReceivePoll.handle },
-            3: { 'class': MessageHandler, 'filter': Filters.regex(BUTTON_RUN),               'function': EossDataRecieved.handle },
-            # 3: MessageHandler(Filters.regex(BUTTON_CANCEL), EossDataCancelled.handle),
-        },
-        'poll_answering': {
-            1: { 'class': PollAnswerHandler, 'function': ReceivePollAnswer.handle },
-        },
-        'stats': {
-            1: { 'class': MessageHandler, 'filter': Filters.regex(menu['LABEL_STATS']), 'function': EossStats.handle }
-        },
-        'property_list': {
-            1: { 'class': MessageHandler, 'filter': Filters.regex(menu['LABEL_LIST_MY_PROPERTY']), 'function': Help.handle }
-        },
-        'property_edit': {
-            1: { 'class': MessageHandler, 'filter': Filters.regex(menu['LABEL_CHANGE_MY_PROPERTY']), 'function': Help.handle }
-        },
-        'help': {
-            1: {'class': CommandHandler, 'filter': 'help', 'function': Help.handle }
-        }
-    }
+    states = {}
 
     """
     Scenarios runned on exceptions
@@ -95,8 +67,86 @@ class ConversationMachine():
         }
     }
 
-    def __init__(self, states: dict):
-        pass
+    def __init__(self):
+        """
+        Scenarios
+
+        TODO: прописать next_possible
+        """
+        self.states = {}
+        self.states['start'] = {
+            1: {
+                'class': CommandHandler,
+                'filter': 'start',
+                'handler': Start(self)
+            }
+        }
+        self.states['eoss_initiate'] = {
+            1: {
+                '_comment': "Объясняем пользователю, как инициировать ЭОСС",
+                'class': MessageHandler,
+                'filter': Filters.regex(self.menu['LABEL_EOSS_START']),
+                'handler': Eoss(self) ,
+                'next_possible': ['eoss_initiate.2'],
+            },
+            2: {
+                '_comment': "Получаем от пользователя опрос и в ответ предлагаем либо запустить его, либо отменить",
+                'class': MessageHandler,
+                'filter': Filters.poll,
+                'handler': ReceivePoll(self),
+                'next_possible': ['eoss_initiate.3','eoss_initiate.4']
+            },
+            3: {
+                '_comment': "Пользователь заказал запуск опроса",
+                'class': MessageHandler,
+                'filter': Filters.regex(BUTTON_RUN),
+                'handler': EossDataRecieved(self),
+                'next_possible': ['help.1']
+            },
+            4: {
+                '_comment': "Пользователь заказал отмену запуска опроса",
+                'class': MessageHandler,
+                'filter': Filters.regex(BUTTON_CANCEL),
+                'handler': EossDataCancelled(self),
+                'next_possible': ['help.1']
+            },
+        }
+        self.states['poll_answering'] = {
+            1: {
+                '_comment': "Пользователи оставляют голоса в публичной группе",
+                'class': PollAnswerHandler,
+                'handler': ReceivePollAnswer(self)
+            },
+        },
+        self.states['stats'] = {
+            1: {
+                'class': MessageHandler,
+                'filter': Filters.regex(self.menu['LABEL_STATS']),
+                'handler': EossStats(self)
+            }
+        }
+        self.states['property_list'] = {
+            1: {
+                'class': MessageHandler,
+                'filter': Filters.regex(self.menu['LABEL_LIST_MY_PROPERTY']),
+                'handler': Help(self)
+            }
+        },
+        self.states['property_edit'] = {
+            1: {
+                'class': MessageHandler,
+                'filter': Filters.regex(self.menu['LABEL_CHANGE_MY_PROPERTY']),
+                'handler': Help(self)
+            }
+        },
+        self.states['help'] = {
+            1: {
+                'class': CommandHandler,
+                'filter': 'help',
+                'function': Help(self)
+            }
+        }
+
 
     """
     As soon as we filter not only by handler type, but also by current step and user's state
@@ -118,7 +168,7 @@ class ConversationMachine():
         try:
             user_state = user.get_dialog_state()
             for path, possible_state in self._get_next_possible_states(user_state, handler_type).items():
-                if possible_state['filter'](update):
+                if possible_state['filter'](update): # TODO: это сломается когда filter будет не указан, либо когда он будет строкой, а не объектом
                     possible_state['function'](update, context, user)
                     user.set_dialog_state(path)
                     return
