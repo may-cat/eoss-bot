@@ -21,6 +21,7 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from ..lib.handler import TGHandler
+from ..models import *
 
 
 class Start(TGHandler):

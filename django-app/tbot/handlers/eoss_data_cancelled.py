@@ -21,6 +21,7 @@ from telegram.ext import (
 )
 from ..helpers.telegramchats import Telegramchats
 from ..lib.handler import TGHandler
+from ..models import *
 
 
 class EossDataCancelled(TGHandler):

@@ -1,0 +1,2 @@
+class FallbackToMenu(Exception):
+    pass

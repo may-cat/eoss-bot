@@ -1,6 +1,5 @@
 import logging
 from .settings import API_KEY, BUTTON_RUN, BUTTON_CANCEL
-from .helpers.menu import Menu
 
 from telegram import (
     Poll,
@@ -23,7 +22,7 @@ from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler
 )
-from convmachine import ConversationMachine
+from .convmachine import ConversationMachine
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO

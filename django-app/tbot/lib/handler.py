@@ -27,14 +27,12 @@ from ..exceptions.needs_verification import UserNeedsVerification
 from ..exceptions.scenario_failed import ScenarioFailed
 from ..exceptions.contact_admin import ContactAdmin
 
-from ..convmachine import ConversationMachine
-
 
 class TGHandler():
     conversation_machine = None
 
-    def __init__(self, conversation_machine: ConversationMachine):
-        self.conversation_machine = conversation_machine
+    def __init__(self, conv_machine):
+        pass
 
     def handler_verified_users_only(self)->bool:
         return True
@@ -43,14 +41,16 @@ class TGHandler():
         return True
 
     def _process_user_verification_check(self, user: User) -> None:
-        verification_pending = True
-        if not user.is_verified():
-            verification_pending = False # TODO: это надо брать из базы откуда-то
+        if user.is_verified():
+            return True
 
-        if verification_pending:
-            raise ContactAdmin()
-        else:
+        if self.handler_verified_users_only():
+            verification_pending = True # TODO: run verification pending check from database
+            if verification_pending:
+                raise ContactAdmin()
             raise UserNeedsVerification()
+
+        return True
 
     def _process_is_private_chat_check(self, update: Update) -> None:
         pass

@@ -20,11 +20,14 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from ..helpers.telegramchats import Telegramchats
-from ..lib.handler import TGHandler
 from ..models import *
+from ..message_templates.message_templates import _need_verifiication, _need_eoss_start
+from ..settings import BUTTON_RUN, BUTTON_CANCEL
+import logging
+from ..lib.handler import TGHandler
 
 
-class ReceiveVerificationRequest(TGHandler):
+class Menu(TGHandler):
     def handler_verified_users_only(self):
         return False
 
@@ -34,8 +37,7 @@ class ReceiveVerificationRequest(TGHandler):
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
         chat_id = update.message.chat_id
 
-        """
-        TODO: пользователь должен был прислать сюда сообщение в котором — его адрес. 
-        Нам надо всё упаковать и отправить админу (???) или сохранить куда-то 
-        как заявку на верификацию.
-        """
+        update.message.reply_text("Тут будет меню")
+
+    # TODO: ....
+
