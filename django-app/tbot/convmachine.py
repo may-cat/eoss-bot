@@ -33,9 +33,11 @@ from .handlers.help_handler import Help
 from .handlers.receive_poll import ReceivePoll
 from .handlers.receive_poll_answer import ReceivePollAnswer
 from .handlers.receive_verification_request import ReceiveVerificationRequest
+from .handlers.silent import Silent
 from .handlers.start import Start
 from .handlers.menu import Menu
 from .exceptions.needs_verification import UserNeedsVerification
+from .exceptions.silent_exception import SilentException
 from .exceptions.scenario_failed import ScenarioFailed
 from .exceptions.contact_admin import ContactAdmin
 from .exceptions.fallback_to_menu import FallbackToMenu
@@ -46,8 +48,8 @@ import traceback
 
 class ConversationMachine():
     menu = {
-        "LABEL_EOSS_START": 'Запустить ЭОСС',
-        "LABEL_STATS": 'Посмотреть результаты ЭОСС',
+        "LABEL_EOSS_START": "Запустить ЭОСС",
+        "LABEL_STATS": "Результаты ЭОСС",
         "LABEL_LIST_MY_PROPERTY": 'Посмотреть свои объекты недвижимости',
         "LABEL_CHANGE_MY_PROPERTY": 'Изменить свои объекты недвижимости'
     }
@@ -74,8 +76,8 @@ class ConversationMachine():
             {},
             {
                 '_comment': "Объясняем пользователю, как инициировать ЭОСС",
-                'class': MessageHandler,
-                'filter': Filters.regex(self.menu['LABEL_EOSS_START']),
+                'class': CallbackQueryHandler,
+                'data_equal': self.menu['LABEL_EOSS_START'],
                 'handler': Eoss(self) ,
                 'next_possible': ['eoss_initiate[2]'],
             },
@@ -106,30 +108,31 @@ class ConversationMachine():
             {
                 '_comment': "Пользователи оставляют голоса в публичной группе",
                 'class': PollAnswerHandler,
-                'handler': ReceivePollAnswer(self)
+                'handler': ReceivePollAnswer(self),
+                'is_not_a_state': True
             }
         ]
         self.states['stats'] = [
             {},
             {
-                'class': MessageHandler,
-                'filter': Filters.regex(self.menu['LABEL_STATS']),
+                'class': CallbackQueryHandler,
+                'data_equal': self.menu['LABEL_STATS'],
                 'handler': EossStats(self)
             }
         ]
         self.states['property_list'] = [
             {},
             {
-                'class': MessageHandler,
-                'filter': Filters.regex(self.menu['LABEL_LIST_MY_PROPERTY']),
+                'class': CallbackQueryHandler,
+                'data_equal': self.menu['LABEL_LIST_MY_PROPERTY'],
                 'handler': Help(self)
             }
         ]
         self.states['property_edit'] = [
             {},
             {
-                'class': MessageHandler,
-                'filter': Filters.regex(self.menu['LABEL_CHANGE_MY_PROPERTY']),
+                'class': CallbackQueryHandler,
+                'data_equal': self.menu['LABEL_CHANGE_MY_PROPERTY'],
                 'handler': Help(self)
             }
         ]
@@ -150,7 +153,10 @@ class ConversationMachine():
                 'handler': ReceiveVerificationRequest(self),
             },
             ScenarioFailed: {
-                # TODO: ....
+                'handler': Menu(self)
+            },
+            SilentException: {
+                'handler': Silent(self)
             },
             ContactAdmin: {
                 'handler': Help(self)
@@ -171,19 +177,16 @@ class ConversationMachine():
     """
     def register_handlers(self, dispatcher: Dispatcher):
         dispatcher.add_handler(MessageHandler(Filters.all, self._custom_message_handler))
-        # dispatcher.add_handler(CommandHandler(Filters.all, self._custom_command_handler))
         dispatcher.add_handler(PollAnswerHandler(self._custom_poll_answer_handler))
+        dispatcher.add_handler(CallbackQueryHandler(self._custom_button_handler))
 
     def _custom_message_handler(self, update: Update, context: CallbackContext) -> None:
-        print('custom_message_handler')
         self._basic_handler(update, context, MessageHandler)
 
-    def _custom_command_handler(self, update: Update, context: CallbackContext) -> None:
-        print('custom_command_handler')
-        self._basic_handler(update, context, CommandHandler)
+    def _custom_button_handler(self, update: Update, context: CallbackContext) -> None:
+        self._basic_handler(update["callback_query"], context, CallbackQueryHandler)
 
     def _custom_poll_answer_handler(self, update: Update, context: CallbackContext) -> None:
-        print('custom_poll_answer_handler')
         self._basic_handler(update, context, PollAnswerHandler)
 
     def _basic_handler(self, update: Update, context: CallbackContext, handler_type):
@@ -195,15 +198,20 @@ class ConversationMachine():
             print("[",user_state,"]")
                                             # TODO: а как быть когда человек прошёл всё и должен быть в стейте "я в главном меню"?
             possible_states = self._get_next_possible_states(user_state, handler_type)
+            print("handler_type")
+            print(handler_type)
             print("possible_states")
             print(possible_states.keys())
             for path, possible_state in possible_states.items():
-                if possible_state['filter'](update): # TODO: это сломается когда filter будет не указан, либо когда он будет строкой, а не объектом
+                if self._update_in_possible_state(possible_state, update):
                     print('running state', path)
                     possible_state['handler'].handle(update=update, context=context, user=user)
                     user.set_dialog_state(path)
                     return
-            raise ScenarioFailed()
+            if self._is_private_chat(update, context, handler_type):
+                raise ScenarioFailed()
+            else:
+                raise SilentException()
         except:
             e = sys.exc_info()[0]
             caught = False
@@ -221,6 +229,13 @@ class ConversationMachine():
 
                 self.fallbacks[FallbackToMenu]['handler'].handle(update=update, context=context, user=user)
 
+    def _update_in_possible_state(self, possible_state, update: Update):
+        if 'data_equal' in possible_state:
+            return update['data'] == possible_state['data_equal']
+        if 'filter' in possible_state:
+            return possible_state['filter'](update)
+        return True
+
     """
     Возвращает какие шаги дальше могут быть
     """
@@ -228,10 +243,12 @@ class ConversationMachine():
         result = {}
         if not path:
             for st in self.states.keys():
-                result[st+"[1]"]=self.states[st][1]
+                if self.states[st][1]['class'] == handler_type:
+                    result[st+"[1]"]=self.states[st][1]
         else:
             current_state = jmespath.search(path, self.states)
-            # TODO: если путь в jmespath скормлен кривой — надо делать `raise FallbackToMenu`
+            if not current_state or 'next_possible' not in current_state:
+                raise FallbackToMenu
             next_possible = current_state['next_possible']
             for item in next_possible:
                 next_state = jmespath.search(item, self.states)
@@ -246,8 +263,15 @@ class ConversationMachine():
         except User.DoesNotExist:
             user = User(
                 user_id=user_id,
-                name="", # TODO: set the goddamn name!
-                verified=False
+                name="debug", # TODO: set the goddamn name!
+                verified=False,
+                dialog_state=""
             )
             user.save()
         return user
+
+    def _is_private_chat(self, update: Update, context: CallbackContext, handler_type):
+        if hasattr(update,'message') and hasattr(update.message,'chat'):
+            return update.message.chat.id>0
+        return False
+

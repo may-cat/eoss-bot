@@ -31,8 +31,6 @@ class ReceivePollAnswer(TGHandler):
         return False
 
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
-        chat_id = update.message.chat_id
-
         answer = update.poll_answer
         poll_id = answer.poll_id
         poll = Poll.objects.get(poll_id=poll_id)

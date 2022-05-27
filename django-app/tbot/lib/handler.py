@@ -56,6 +56,7 @@ class TGHandler():
         pass
 
     def handle(self, update: Update, context: CallbackContext, user: User) -> None:
+        print("Runned class", self.__class__.__name__)
         # TODO: add logging
         # Check if user may use the bot
         if self.handler_verified_users_only():

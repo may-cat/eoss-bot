@@ -42,7 +42,7 @@ class Eoss(TGHandler):
         except Draft.DoesNotExist:
             draft = Draft(chat_id=chat_id)
             draft.save()
-            draft.activate()
+        draft.activate()
 
         context.bot.send_message(
             chat_id,

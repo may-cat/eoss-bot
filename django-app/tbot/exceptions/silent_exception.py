@@ -1,0 +1,2 @@
+class SilentException(Exception):
+    pass

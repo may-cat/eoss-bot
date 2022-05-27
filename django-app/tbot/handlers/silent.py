@@ -27,7 +27,7 @@ import logging
 from ..lib.handler import TGHandler
 
 
-class Menu(TGHandler):
+class Silent(TGHandler):
     def handler_verified_users_only(self):
         return False
 
@@ -35,15 +35,7 @@ class Menu(TGHandler):
         return False
 
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
-        chat_id = update.message.chat_id
-
-        keyboard = [
-            [InlineKeyboardButton("Запустить ЭОСС", callback_data="Запустить ЭОСС")],
-            [InlineKeyboardButton("Результаты ЭОСС", callback_data="Результаты ЭОСС")],
-        ]
-        markup = InlineKeyboardMarkup(keyboard)
-
-        update.message.reply_text("🏠", reply_markup=markup)
+        pass
 
     # TODO: ....
 

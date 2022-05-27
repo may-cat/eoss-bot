@@ -84,7 +84,7 @@ class User(models.Model):
     user_id = models.BigIntegerField(null=False)
     name = models.CharField(max_length=255, null=False)
     verified = models.BooleanField(default=False)
-    dialog_state = models.CharField(max_length=255, null=False, default="")
+    dialog_state = models.CharField(max_length=255, null=True, default="")
     """
     Возвращает свойство пользователя, которое на самом деле является путём в массиве ConvMachine.states.
     Значение свойства соответствует формату библиотеки jmespath

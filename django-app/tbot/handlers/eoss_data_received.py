@@ -45,36 +45,36 @@ class EossDataRecieved(TGHandler):
         logging.critical(draft)
 
         if not draft.has_enough_data():
-            _need_eoss_start(context, chat_id)
-        else:
-            # Tell user, that we will start now
-            context.bot.send_message(
-                chat_id,
-                "Всё принято, сейчас запустим ЭОСС в группе " + section.get_title() +
-                "Чтобы узнать результаты — используйте команду /eoss_stats",
-                parse_mode=ParseMode.HTML,
-                reply_markup=ReplyKeyboardRemove()
-            )
+            raise Exception("Пытаемся инициировать опрос, а данных не хватает")
 
-            # Send poll to relevant section chat and save data about it to our storage for future use
-            message = context.bot.send_poll(
-                section.get_chat_id(),
-                draft.get_question(),
-                draft.get_options(),
-                is_anonymous=False,
-                allows_multiple_answers=False,
-                reply_markup=ReplyKeyboardRemove()
-            )
-            poll_id = message.poll.id
+        # Tell user, that we will start now
+        context.bot.send_message(
+            chat_id,
+            "Всё принято, сейчас запустим ЭОСС в группе " + section.get_title() +
+            "Чтобы узнать результаты — используйте команду /eoss_stats",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ReplyKeyboardRemove()
+        )
 
-            # зафиксировать в базе, что он создан
-            poll_object = Poll(
-                poll_id=poll_id,
-                options=json.dumps(draft.get_options()), # TODO: тут некрасивое, палим как в модели на самом деле хранятся данные. Надо бы пофиксить когда-нибудь
-                question=draft.get_question(),
-                section=section
-            )
-            poll_object.save()
+        # Send poll to relevant section chat and save data about it to our storage for future use
+        message = context.bot.send_poll(
+            section.get_chat_id(),
+            draft.get_question(),
+            draft.get_options(),
+            is_anonymous=False,
+            allows_multiple_answers=False,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        poll_id = message.poll.id
 
-            # deactivate draft
-            draft.deactivate()
+        # зафиксировать в базе, что он создан
+        poll_object = Poll(
+            poll_id=poll_id,
+            options=json.dumps(draft.get_options()), # TODO: тут некрасивое, палим как в модели на самом деле хранятся данные. Надо бы пофиксить когда-нибудь
+            question=draft.get_question(),
+            section=section
+        )
+        poll_object.save()
+
+        # deactivate draft
+        draft.deactivate()
