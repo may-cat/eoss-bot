@@ -35,15 +35,15 @@ class Menu(TGHandler):
         return False
 
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
-        chat_id = update.message.chat_id
-
         keyboard = [
             [InlineKeyboardButton("Запустить ЭОСС", callback_data="Запустить ЭОСС")],
             [InlineKeyboardButton("Результаты ЭОСС", callback_data="Результаты ЭОСС")],
         ]
         markup = InlineKeyboardMarkup(keyboard)
 
-        update.message.reply_text("🏠", reply_markup=markup)
+        Когда голосование то тут отстреливает, потому что нет никаокго message
+
+        update.message.reply_text("🏠 Добро пожаловать домой, выберите действие:", reply_markup=markup)
 
     # TODO: ....
 

@@ -20,4 +20,13 @@ class UserAdmin(admin.ModelAdmin):
 class EstateowningAdmin(admin.ModelAdmin):
     list_display = ('estate','user','owning_weight')
 
+@admin.register(Poll)
+class PollAdmin(admin.ModelAdmin):
+    list_display = ('options','question','section')
+
+@admin.register(Vote)
+class VoteAdmin(admin.ModelAdmin):
+    list_display = ('poll','user','selected_vote_id', 'selected_vote')
+
+
 
