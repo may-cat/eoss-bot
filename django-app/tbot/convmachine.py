@@ -36,6 +36,13 @@ from .handlers.receive_verification_request import ReceiveVerificationRequest
 from .handlers.silent import Silent
 from .handlers.start import Start
 from .handlers.menu import Menu
+from .lib.check import Check
+from .checks.is_private_chat import IsPrivateChat
+from .checks.run_filter import RunFilter
+from .checks.is_verified import IsVerified
+from .checks.data_equal import DataEqual
+from .checks.previous_is import PreviousIs
+from .checks.is_public_chat import IsPublicChat
 from .exceptions.needs_verification import UserNeedsVerification
 from .exceptions.silent_exception import SilentException
 from .exceptions.scenario_failed import ScenarioFailed
@@ -61,87 +68,124 @@ class ConversationMachine():
         """
         Scenarios
 
-        TODO: прописать next_possible
         """
         self.states = {}
         self.states['start'] = [
-            {},
             {
                 'class': CommandHandler,
-                'filter': Filters.regex("\/start"),
-                'handler': Start(self)
+                'handler': Start,
+                'restrict': [
+                    IsPrivateChat,
+                    [RunFilter, Filters.regex("\/start")]
+                ],
+                'is_state': True,
             }
         ]
         self.states['eoss_initiate'] = [
-            {},
             {
-                '_comment': "Объясняем пользователю, как инициировать ЭОСС",
+                # Объясняем пользователю, как инициировать ЭОСС
                 'class': CallbackQueryHandler,
-                'data_equal': self.menu['LABEL_EOSS_START'],
-                'handler': Eoss(self) ,
-                'next_possible': ['eoss_initiate[2]'],
+                'handler': Eoss,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [DataEqual, self.menu['LABEL_EOSS_START']],
+                ],
+                'is_state': True,
             },
             {
-                '_comment': "Получаем от пользователя опрос и в ответ предлагаем либо запустить его, либо отменить",
+                # Получаем от пользователя опрос и в ответ предлагаем либо запустить его, либо отменить
                 'class': MessageHandler,
-                'filter': Filters.poll,
-                'handler': ReceivePoll(self),
-                'next_possible': ['eoss_initiate[3]','eoss_initiate[4]']
+                'handler': ReceivePoll,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [PreviousIs, 'eoss_initiate[0]'],
+                    [RunFilter, Filters.poll],
+                ],
+                'is_state': True,
             },
             {
-                '_comment': "Пользователь заказал запуск опроса",
+                # Пользователь заказал запуск опроса
                 'class': MessageHandler,
-                'filter': Filters.regex(BUTTON_RUN),
-                'handler': EossDataRecieved(self),
-                'next_possible': ['help[1]']
+                'handler': EossDataRecieved,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [PreviousIs, 'eoss_initiate[1]'],
+                    [RunFilter, Filters.regex(BUTTON_RUN)],
+                ],
+                'is_state': True,
             },
             {
-                '_comment': "Пользователь заказал отмену запуска опроса",
+                # Пользователь заказал отмену запуска опроса
                 'class': MessageHandler,
-                'filter': Filters.regex(BUTTON_CANCEL),
-                'handler': EossDataCancelled(self),
-                'next_possible': ['help[1]']
+                'handler': EossDataCancelled,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [PreviousIs, 'eoss_initiate[1]'],
+                    [RunFilter, Filters.regex(BUTTON_CANCEL)],
+                ],
+                'is_state': True,
             },
         ]
         self.states['poll_answering'] = [
-            {},
             {
-                '_comment': "Пользователи оставляют голоса в публичной группе",
+                # Пользователи оставляют голоса в публичной группе
                 'class': PollAnswerHandler,
-                'handler': ReceivePollAnswer(self),
-                'is_not_a_state': True
+                'handler': ReceivePollAnswer,
+                'restrict': [
+                    # IsPublicChat,
+                ],
+                'is_state': False,
             }
         ]
         self.states['stats'] = [
-            {},
             {
                 'class': CallbackQueryHandler,
-                'data_equal': self.menu['LABEL_STATS'],
-                'handler': EossStats(self)
+                'handler': EossStats,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [DataEqual, self.menu['LABEL_STATS']],
+                ],
+                'is_state': True,
             }
         ]
         self.states['property_list'] = [
-            {},
             {
                 'class': CallbackQueryHandler,
-                'data_equal': self.menu['LABEL_LIST_MY_PROPERTY'],
-                'handler': Help(self)
+                'handler': Help,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [DataEqual, self.menu['LABEL_LIST_MY_PROPERTY']]
+                ],
+                'is_state': True,
             }
         ]
         self.states['property_edit'] = [
-            {},
             {
                 'class': CallbackQueryHandler,
-                'data_equal': self.menu['LABEL_CHANGE_MY_PROPERTY'],
-                'handler': Help(self)
+                'handler': Help,
+                'restrict': [
+                    IsPrivateChat,
+                    IsVerified,
+                    [DataEqual, self.menu['LABEL_CHANGE_MY_PROPERTY']]
+                ],
+                'is_state': True,
             }
         ]
         self.states['help'] = [
-            {},
             {
                 'class': CommandHandler,
-                'filter': Filters.regex("\/help"),
-                'handler': Help(self)
+                'handler': Help,
+                'restrict': [
+                    IsPrivateChat,
+                    [RunFilter, Filters.regex("\/help")]
+                ],
+                'is_state': False,
             }
         ]
 
@@ -150,22 +194,22 @@ class ConversationMachine():
         """
         self.fallbacks = {
             UserNeedsVerification: {
-                'handler': ReceiveVerificationRequest(self),
+                'handler': ReceiveVerificationRequest(),
             },
             ScenarioFailed: {
-                'handler': Menu(self)
+                'handler': Menu()
             },
             SilentException: {
-                'handler': Silent(self)
+                'handler': Silent()
             },
             ContactAdmin: {
-                'handler': Help(self)
+                'handler': Help()
             },
             Exception: {
-                'handler': Help(self)
+                'handler': Help()
             },
             FallbackToMenu: {
-                'handler': Menu(self)
+                'handler': Menu()
             }
         }
 
@@ -190,24 +234,21 @@ class ConversationMachine():
         self._basic_handler(update, context, PollAnswerHandler)
 
     def _basic_handler(self, update: Update, context: CallbackContext, handler_type):
-        print('basic_handler')
         user = self._get_user(update, context)
         try:
-            user_state = user.get_dialog_state()
-            print("user", user, "in state")
-            print("[",user_state,"]")
-                                            # TODO: а как быть когда человек прошёл всё и должен быть в стейте "я в главном меню"?
-            possible_states = self._get_next_possible_states(user_state, handler_type)
-            print("handler_type")
-            print(handler_type)
-            print("possible_states")
-            print(possible_states.keys())
-            for path, possible_state in possible_states.items():
-                if self._update_in_possible_state(possible_state, update):
-                    print('running state', path)
-                    possible_state['handler'].handle(update=update, context=context, user=user)
-                    user.set_dialog_state(path)
-                    return
+            for sckey, scenario in self.states.items():
+                for stkey in range(0, len(scenario)):
+                    step = scenario[stkey]
+                    if step['class'] == handler_type:
+                        passed = True
+                        if 'restrict' in step:
+                            passed = self._check_restrictions(update, context, handler_type, step, user)
+                        if passed:
+                            objStep = step['handler']()
+                            objStep.run(update=update, context=context, user=user)
+                            if step['is_state']:
+                                user.set_dialog_state(sckey+"["+str(stkey)+"]")
+                            return True
             if self._is_private_chat(update, context, handler_type):
                 raise ScenarioFailed()
             else:
@@ -217,9 +258,9 @@ class ConversationMachine():
             caught = False
             for exception_type in self.fallbacks.keys():
                 if e == exception_type:
-                    print('fallback to ',exception_type)
+                    print('fallback to ', exception_type)
                     print(e)
-                    self.fallbacks[exception_type]['handler'].handle(update=update, context=context, user=user)
+                    self.fallbacks[exception_type]['handler'].run(update=update, context=context, user=user)
                     user.set_dialog_state("")
                     caught = True
             if not caught:
@@ -227,34 +268,20 @@ class ConversationMachine():
                 print(sys.exc_info())
                 print(traceback.format_exc())
 
-                self.fallbacks[FallbackToMenu]['handler'].handle(update=update, context=context, user=user)
+                self.fallbacks[FallbackToMenu]['handler'].run(update=update, context=context, user=user)
 
-    def _update_in_possible_state(self, possible_state, update: Update):
-        if 'data_equal' in possible_state:
-            return update['data'] == possible_state['data_equal']
-        if 'filter' in possible_state:
-            return possible_state['filter'](update)
+    def _check_restrictions(self, update: Update, context: CallbackContext, handler_type, step, user: User) -> bool:
+        for check in step['restrict']:
+            check_result = False
+            if not isinstance(check, list):
+                obj_check = check()
+                check_result = obj_check.run(update=update, context=context, handler_type=handler_type, step=step, user=user)
+            elif isinstance(check, list):
+                obj_check = check[0]()
+                check_result = obj_check.run(update=update, context=context, handler_type=handler_type, step=step, user=user, options=check[1:])
+            if not check_result:
+                return False
         return True
-
-    """
-    Возвращает какие шаги дальше могут быть
-    """
-    def _get_next_possible_states(self, path: str, handler_type):
-        result = {}
-        if not path:
-            for st in self.states.keys():
-                if self.states[st][1]['class'] == handler_type:
-                    result[st+"[1]"]=self.states[st][1]
-        else:
-            current_state = jmespath.search(path, self.states)
-            if not current_state or 'next_possible' not in current_state:
-                raise FallbackToMenu
-            next_possible = current_state['next_possible']
-            for item in next_possible:
-                next_state = jmespath.search(item, self.states)
-                if next_state['class'] == handler_type:
-                    result[item] = next_state
-        return result
 
     def _get_user(self, update: Update, context: CallbackContext) -> User:
         user_id = Telegramchats.get_user_id(update)

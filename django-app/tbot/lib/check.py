@@ -28,8 +28,6 @@ from ..exceptions.scenario_failed import ScenarioFailed
 from ..exceptions.contact_admin import ContactAdmin
 
 
-class TGHandler():
-    conversation_machine = None
-
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+class Check():
+    def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
         pass

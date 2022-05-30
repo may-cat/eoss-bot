@@ -41,9 +41,6 @@ class Menu(TGHandler):
         ]
         markup = InlineKeyboardMarkup(keyboard)
 
-        Когда голосование то тут отстреливает, потому что нет никаокго message
-
         update.message.reply_text("🏠 Добро пожаловать домой, выберите действие:", reply_markup=markup)
 
-    # TODO: ....
 

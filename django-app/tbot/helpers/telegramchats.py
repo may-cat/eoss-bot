@@ -24,8 +24,6 @@ class Telegramchats():
 
     @staticmethod
     def get_user_id(update: Update):
-        print("get_user_id")
-        print(update)
         if hasattr(update, 'message') and hasattr(update.message,'chat'):
             return update.message.chat.id
         if hasattr(update, 'poll_answer') and hasattr(update.poll_answer,'user'):

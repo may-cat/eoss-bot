@@ -24,12 +24,6 @@ from ..lib.handler import TGHandler
 
 
 class ReceivePollAnswer(TGHandler):
-    def handler_verified_users_only(self):
-        return False
-
-    def handler_private_chats_only(self) -> bool:
-        return False
-
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
         answer = update.poll_answer
         poll_id = answer.poll_id
@@ -49,13 +43,6 @@ class ReceivePollAnswer(TGHandler):
         answer_id = answer.option_ids[0]
         answer_str = poll.get_options()[answer_id]
 
-        print("poll")
-        print(poll)
-        print("answer_id")
-        print(answer_id)
-        print("answer_str")
-        print(answer_str)
-
         vote = Vote(
             poll=poll,
             user=user,
@@ -63,5 +50,3 @@ class ReceivePollAnswer(TGHandler):
             selected_vote=poll.get_options()[answer_id]
         )
         vote.save()
-        print("vote")
-        print(vote)

@@ -183,10 +183,6 @@ class Poll(models.Model):
     """
 
     def get_options(self) -> list:
-        print("optinons")
-        print(self.options)
-        print("JSON")
-        print(json.loads(self.options))
         return json.loads(self.options)
 
     def get_question(self) -> str:

@@ -25,12 +25,6 @@ from ..models import *
 
 
 class ReceiveVerificationRequest(TGHandler):
-    def handler_verified_users_only(self):
-        return False
-
-    def handler_private_chats_only(self) ->bool:
-        return False
-
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
         chat_id = update.message.chat_id
 

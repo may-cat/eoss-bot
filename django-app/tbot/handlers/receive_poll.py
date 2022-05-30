@@ -28,12 +28,6 @@ from ..lib.handler import TGHandler
 
 
 class ReceivePoll(TGHandler):
-    def handler_verified_users_only(self):
-        return True
-
-    def handler_private_chats_only(self) ->bool:
-        return True
-
     def run(self, update: Update, context: CallbackContext, user: User) -> None:
         chat_id = update.message.chat_id
 

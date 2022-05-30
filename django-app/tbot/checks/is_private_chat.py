@@ -24,11 +24,12 @@ from ..models import *
 from ..message_templates.message_templates import _need_verifiication, _need_eoss_start
 from ..settings import BUTTON_RUN, BUTTON_CANCEL
 import logging
-from ..lib.handler import TGHandler
+from ..lib.check import Check
 
 
-class Silent(TGHandler):
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
-        pass
-
+class IsPrivateChat(Check):
+    def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
+        if hasattr(update, 'message') and hasattr(update.message, 'chat'):
+            return update.message.chat.id > 0
+        return False
 
