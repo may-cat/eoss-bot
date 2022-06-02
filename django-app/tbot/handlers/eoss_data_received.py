@@ -28,13 +28,7 @@ from ..lib.handler import TGHandler
 
 
 class EossDataRecieved(TGHandler):
-    def handler_verified_users_only(self):
-        return True
-
-    def handler_private_chats_only(self) ->bool:
-        return True
-
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
         draft = Draft.objects.get(chat_id=chat_id)
@@ -78,3 +72,5 @@ class EossDataRecieved(TGHandler):
 
         # deactivate draft
         draft.deactivate()
+
+        return True

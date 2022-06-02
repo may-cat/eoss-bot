@@ -36,6 +36,9 @@ from .handlers.receive_verification_request import ReceiveVerificationRequest
 from .handlers.silent import Silent
 from .handlers.start import Start
 from .handlers.menu import Menu
+from .handlers.verify_getsection import VerifyGetSection
+from .handlers.verify_receivemessages import VerifyReceiveMessages
+from .handlers.revert_poll_answer import RevertPollAnswer
 from .lib.check import Check
 from .checks.is_private_chat import IsPrivateChat
 from .checks.run_filter import RunFilter
@@ -43,6 +46,10 @@ from .checks.is_verified import IsVerified
 from .checks.data_equal import DataEqual
 from .checks.previous_is import PreviousIs
 from .checks.is_public_chat import IsPublicChat
+from .checks.is_not_verified import IsNotVerified
+from .checks.data_matches import DataMatches
+from .checks.poll_answer_is_empty import PollAnswerIsEmpty
+from .checks.poll_answer_is_not_empty import PollAnswerNotEmpty
 from .exceptions.needs_verification import UserNeedsVerification
 from .exceptions.silent_exception import SilentException
 from .exceptions.scenario_failed import ScenarioFailed
@@ -72,6 +79,7 @@ class ConversationMachine():
         self.states = {}
         self.states['start'] = [
             {
+                # Говорит дратути. И если чувак ещё не заапрувлен — говорит, скажите, откуда вы. Возможно даже кнопки с выбором.
                 'class': CommandHandler,
                 'handler': Start,
                 'restrict': [
@@ -80,6 +88,36 @@ class ConversationMachine():
                 ],
                 'is_state': True,
             }
+        ]
+        self.states['verify_process'] = [
+            {
+                # Получает сообщение которое должно быть сообщением откуда он (дом или чат секции, хз).
+                # Если это оно — говорим, что нам надо теперь с него инфу обо всех объектах недвижимости и его проценте владения
+                # Он это должен отправить, хз, сообщением или нескольким?
+                # Где-то создаём заявку на аппрув? Привязывая её к нужному админу секции.
+                'class': CallbackQueryHandler,
+                'handler': VerifyGetSection,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [DataMatches, 'чототипа'] # TODO: указать какой-то шаблон по которому кнопки секций именуются
+                ],
+                'is_state': True,
+            },
+            {
+                # Сообщение в ответ на предыдущее.
+                # Добавляем его к списку сообщений этого юзера в заявке
+                # Пересылаем нужному админу
+                # В ответ говорим, что сообщение передано
+                'class': CallbackQueryHandler,
+                'handler': VerifyReceiveMessages,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'validation_request[0]'],
+                ],
+                'is_state': True,
+            },
         ]
         self.states['eoss_initiate'] = [
             {
@@ -136,10 +174,19 @@ class ConversationMachine():
                 'class': PollAnswerHandler,
                 'handler': ReceivePollAnswer,
                 'restrict': [
-                    # IsPublicChat,
+                    PollAnswerNotEmpty,
                 ],
                 'is_state': False,
-            }
+            },
+            {
+                # Пользователи оставляют голоса в публичной группе
+                'class': PollAnswerHandler,
+                'handler': RevertPollAnswer,
+                'restrict': [
+                    PollAnswerIsEmpty,
+                ],
+                'is_state': False,
+            },
         ]
         self.states['stats'] = [
             {
@@ -245,8 +292,7 @@ class ConversationMachine():
                             passed = self._check_restrictions(update, context, handler_type, step, user)
                         if passed:
                             objStep = step['handler']()
-                            objStep.run(update=update, context=context, user=user)
-                            if step['is_state']:
+                            if objStep.run(update=update, context=context, user=user) and step['is_state']:
                                 user.set_dialog_state(sckey+"["+str(stkey)+"]")
                             return True
             if self._is_private_chat(update, context, handler_type):
@@ -288,9 +334,15 @@ class ConversationMachine():
         try:
             user = User.objects.get(user_id=user_id)
         except User.DoesNotExist:
+            name = "unknown"
+            if hasattr(update, "message"):
+                name = update.message.from_user.first_name + " " + update.message.from_user.last_name
+            else:
+                print(update)
+
             user = User(
                 user_id=user_id,
-                name="debug", # TODO: set the goddamn name!
+                name=name,
                 verified=False,
                 dialog_state=""
             )

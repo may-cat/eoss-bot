@@ -28,13 +28,7 @@ from ..lib.handler import TGHandler
 
 
 class Menu(TGHandler):
-    def handler_verified_users_only(self):
-        return False
-
-    def handler_private_chats_only(self) ->bool:
-        return False
-
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         keyboard = [
             [InlineKeyboardButton("Запустить ЭОСС", callback_data="Запустить ЭОСС")],
             [InlineKeyboardButton("Результаты ЭОСС", callback_data="Результаты ЭОСС")],
@@ -42,5 +36,6 @@ class Menu(TGHandler):
         markup = InlineKeyboardMarkup(keyboard)
 
         update.message.reply_text("🏠 Добро пожаловать домой, выберите действие:", reply_markup=markup)
+        return True
 
 

@@ -20,17 +20,13 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from ..helpers.telegramchats import Telegramchats
-from ..lib.handler import TGHandler
 from ..models import *
+from ..message_templates.message_templates import _need_verifiication, _need_eoss_start
+from ..settings import BUTTON_RUN, BUTTON_CANCEL
+import logging
+from ..lib.check import Check
 
 
-class EossDataCancelled(TGHandler):
-    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
-        chat_id = update.message.chat_id
-
-        context.bot.send_message(
-            chat_id,
-            "Сорян, это ещё не реализовали :) ",
-            parse_mode=ParseMode.HTML
-        )
-        return True
+class PollAnswerIsEmpty(Check):
+    def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
+        return len(update.poll_answer.option_ids) == 0

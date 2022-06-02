@@ -29,13 +29,7 @@ from ..lib.handler import TGHandler
 
 
 class EossStats(TGHandler):
-    def handler_verified_users_only(self):
-        return True
-
-    def handler_private_chats_only(self) ->bool:
-        return True
-
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
         """
@@ -117,3 +111,4 @@ class EossStats(TGHandler):
                     parse_mode=ParseMode.HTML
                 )
 
+        return True

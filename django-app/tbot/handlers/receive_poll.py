@@ -28,7 +28,7 @@ from ..lib.handler import TGHandler
 
 
 class ReceivePoll(TGHandler):
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
         section = Section.objects.get(id=1) # TODO: тут вместо этого должен быть какой-то сценарий как из чата с пользователем восстановить чат подъезда
@@ -58,4 +58,4 @@ class ReceivePoll(TGHandler):
                 parse_mode=ParseMode.HTML,
                 reply_markup=ReplyKeyboardMarkup(button, one_time_keyboard=True)
             )
-
+        return True

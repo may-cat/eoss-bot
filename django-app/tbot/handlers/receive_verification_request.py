@@ -25,7 +25,7 @@ from ..models import *
 
 
 class ReceiveVerificationRequest(TGHandler):
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
         """
@@ -33,3 +33,4 @@ class ReceiveVerificationRequest(TGHandler):
         Нам надо всё упаковать и отправить админу (???) или сохранить куда-то 
         как заявку на верификацию.
         """
+        return True

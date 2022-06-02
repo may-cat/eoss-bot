@@ -22,32 +22,25 @@ from telegram.ext import (
 from ..models import *
 from ..lib.handler import TGHandler
 
-
-class ReceivePollAnswer(TGHandler):
+class RevertPollAnswer(TGHandler):
     def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         answer = update.poll_answer
         poll_id = answer.poll_id
         poll = Poll.objects.get(poll_id=poll_id)
         user_id = answer.user.id
-        poll_options = poll.get_options()
 
         try:
             user = User.objects.get(user_id=user_id)
         except User.DoesNotExist:
             user = User(
                 user_id=user_id,
-                name=answer.user.first_name+" "+answer.user.last_name
+                name=answer.user.name
             )
             user.save()
 
-        answer_id = answer.option_ids[0]
-        answer_str = poll.get_options()[answer_id]
-
-        vote = Vote(
+        Vote.objects.filter(
             poll=poll,
-            user=user,
-            selected_vote_id=answer_id,
-            selected_vote=poll.get_options()[answer_id]
-        )
-        vote.save()
+            user=user
+        ).all().delete()
+
         return True

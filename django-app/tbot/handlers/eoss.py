@@ -28,13 +28,7 @@ from ..lib.handler import TGHandler
 
 
 class Eoss(TGHandler):
-    def handler_verified_users_only(self):
-        return True
-
-    def handler_private_chats_only(self) ->bool:
-        return True
-
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
         try:
@@ -50,3 +44,5 @@ class Eoss(TGHandler):
             parse_mode=ParseMode.HTML,
             reply_markup=ReplyKeyboardRemove()
         )
+
+        return True

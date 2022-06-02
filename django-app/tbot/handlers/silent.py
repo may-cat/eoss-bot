@@ -28,7 +28,7 @@ from ..lib.handler import TGHandler
 
 
 class Silent(TGHandler):
-    def run(self, update: Update, context: CallbackContext, user: User) -> None:
-        pass
+    def run(self, update: Update, context: CallbackContext, user: User) -> bool:
+        return True
 
 
