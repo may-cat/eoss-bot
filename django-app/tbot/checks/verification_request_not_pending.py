@@ -27,6 +27,8 @@ import logging
 from ..lib.check import Check
 
 
-class DataMatches(Check):
+class VerificationRequestNotPending(Check):
     def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
-        return update['data'].startswith(options[0])
+        return len(VerificationRequest.objects.filter(user=user)) == 0
+
+

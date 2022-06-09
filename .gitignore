@@ -2,3 +2,7 @@
 local.env
 django-app/db.sqlite3
 __pycache__
+tests-app/*.session
+tests-app/*.session-journal
+tests-app/.pytest_cache
+config.md

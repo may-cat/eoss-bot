@@ -36,9 +36,17 @@ from .handlers.receive_verification_request import ReceiveVerificationRequest
 from .handlers.silent import Silent
 from .handlers.start import Start
 from .handlers.menu import Menu
-from .handlers.verify_getsection import VerifyGetSection
+from .handlers.verification_pending import VerificationPending
+from .handlers.verify_getflat import VerifyGetFlat
+from .handlers.verify_getparking import VerifyGetParking
+from .handlers.verify_getparking_none import VerifyGetParkingNone
+from .handlers.verify_getstoreroom import VerifyGetStoreroom
+from .handlers.verify_getstoreroom_none import VerifyGetStoreroomNone
+from .handlers.verify_getcommerce import VerifyGetCommerce
+from .handlers.verify_getcommerce_none import VerifyGetCommerceNone
 from .handlers.verify_receivemessages import VerifyReceiveMessages
 from .handlers.revert_poll_answer import RevertPollAnswer
+from .handlers.you_should_verify_first import YouShouldVerifyFirst
 from .lib.check import Check
 from .checks.is_private_chat import IsPrivateChat
 from .checks.run_filter import RunFilter
@@ -50,6 +58,8 @@ from .checks.is_not_verified import IsNotVerified
 from .checks.data_matches import DataMatches
 from .checks.poll_answer_is_empty import PollAnswerIsEmpty
 from .checks.poll_answer_is_not_empty import PollAnswerNotEmpty
+from .checks.verification_request_pending import VerificationRequestPending
+from .checks.verification_request_not_pending import VerificationRequestNotPending
 from .exceptions.needs_verification import UserNeedsVerification
 from .exceptions.silent_exception import SilentException
 from .exceptions.scenario_failed import ScenarioFailed
@@ -79,32 +89,105 @@ class ConversationMachine():
         self.states = {}
         self.states['start'] = [
             {
-                # Говорит дратути. И если чувак ещё не заапрувлен — говорит, скажите, откуда вы. Возможно даже кнопки с выбором.
-                'class': CommandHandler,
+                # Говорит дратути
+                # Если не заапрувлен — кидаем ему список квартир и он из них выбирает
+                'class': MessageHandler,
                 'handler': Start,
                 'restrict': [
                     IsPrivateChat,
                     [RunFilter, Filters.regex("\/start")]
                 ],
                 'is_state': True,
-            }
+            },
         ]
         self.states['verify_process'] = [
             {
-                # Получает сообщение которое должно быть сообщением откуда он (дом или чат секции, хз).
-                # Если это оно — говорим, что нам надо теперь с него инфу обо всех объектах недвижимости и его проценте владения
-                # Он это должен отправить, хз, сообщением или нескольким?
-                # Где-то создаём заявку на аппрув? Привязывая её к нужному админу секции.
+                # 0
+                # Нажал на кнопку с номером квартиры
                 'class': CallbackQueryHandler,
-                'handler': VerifyGetSection,
+                'handler': VerifyGetFlat,
                 'restrict': [
                     IsPrivateChat,
                     IsNotVerified,
-                    [DataMatches, 'чототипа'] # TODO: указать какой-то шаблон по которому кнопки секций именуются
+                    [PreviousIs, 'start[0]'],
+                    [DataMatches, 'owning_flat_']
                 ],
                 'is_state': True,
             },
             {
+                # 1
+                # Прислал номер паркинга
+                'class': MessageHandler,
+                'handler': VerifyGetParking,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[0]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 2
+                # Нажал на кнопку "нет паркинга"
+                'class': CallbackQueryHandler,
+                'handler': VerifyGetParkingNone,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[0]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 3
+                # Прислал номер кладовки
+                'class': MessageHandler,
+                'handler': VerifyGetStoreroom,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[1],verify_process[2]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 4
+                # Нажал на кнопку "кладовки нет"
+                'class': CallbackQueryHandler,
+                'handler': VerifyGetStoreroomNone,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[1],verify_process[2]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 5
+                # Прислал инфу о коммерческом помещении
+                'class': MessageHandler,
+                'handler': VerifyGetCommerce,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[3],verify_process[4]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 6
+                # Нажал на кнопку "нет коммерческого помещения"
+                'class': CallbackQueryHandler,
+                'handler': VerifyGetCommerceNone,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    [PreviousIs, 'verify_process[3],verify_process[4]'],
+                ],
+                'is_state': True,
+            },
+            {
+                # 7
                 # Сообщение в ответ на предыдущее.
                 # Добавляем его к списку сообщений этого юзера в заявке
                 # Пересылаем нужному админу
@@ -114,7 +197,7 @@ class ConversationMachine():
                 'restrict': [
                     IsPrivateChat,
                     IsNotVerified,
-                    [PreviousIs, 'validation_request[0]'],
+                    [PreviousIs, 'validation_request[5],validation_request[6]'],
                 ],
                 'is_state': True,
             },
@@ -235,6 +318,30 @@ class ConversationMachine():
                 'is_state': False,
             }
         ]
+        self.states['pending'] = [
+            {
+                # Если присылает какое-то сообщение а он не аппрувлен, но с заявкой
+                'class': MessageHandler,
+                'handler': VerificationPending,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    VerificationRequestPending,
+                ],
+                'is_state': True,
+            },
+            {
+                # Если присылает какое-то сообщение а он не аппрувлен, но с заявкой
+                'class': MessageHandler,
+                'handler': YouShouldVerifyFirst,
+                'restrict': [
+                    IsPrivateChat,
+                    IsNotVerified,
+                    VerificationRequestNotPending,
+                ],
+                'is_state': True,
+            },
+        ]
 
         """
         Scenarios runned on exceptions
@@ -292,6 +399,9 @@ class ConversationMachine():
                             passed = self._check_restrictions(update, context, handler_type, step, user)
                         if passed:
                             objStep = step['handler']()
+                            print('user', user, 'starting step', step, 'run', objStep)
+                            print(update)
+                            print("\n\n")
                             if objStep.run(update=update, context=context, user=user) and step['is_state']:
                                 user.set_dialog_state(sckey+"["+str(stkey)+"]")
                             return True
@@ -330,24 +440,7 @@ class ConversationMachine():
         return True
 
     def _get_user(self, update: Update, context: CallbackContext) -> User:
-        user_id = Telegramchats.get_user_id(update)
-        try:
-            user = User.objects.get(user_id=user_id)
-        except User.DoesNotExist:
-            name = "unknown"
-            if hasattr(update, "message"):
-                name = update.message.from_user.first_name + " " + update.message.from_user.last_name
-            else:
-                print(update)
-
-            user = User(
-                user_id=user_id,
-                name=name,
-                verified=False,
-                dialog_state=""
-            )
-            user.save()
-        return user
+        return User.factory_on_telegram_message(update)
 
     def _is_private_chat(self, update: Update, context: CallbackContext, handler_type):
         if hasattr(update,'message') and hasattr(update.message,'chat'):

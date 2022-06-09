@@ -28,5 +28,8 @@ class PollAdmin(admin.ModelAdmin):
 class VoteAdmin(admin.ModelAdmin):
     list_display = ('poll','user','selected_vote_id', 'selected_vote')
 
+@admin.register(VerificationRequest)
+class VerificationRequestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'section', 'flat', 'parking', 'storeroom', 'commerce')
 
 

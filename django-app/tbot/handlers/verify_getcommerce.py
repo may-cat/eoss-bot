@@ -22,16 +22,11 @@ from telegram.ext import (
 )
 from ..lib.handler import TGHandler
 from ..models import *
-from ..exceptions.fallback_to_menu import FallbackToMenu
 from ..helpers.making_verification_request import MakingVerificationRequest
 
 
-class Start(TGHandler):
+class VerifyGetCommerce(TGHandler):
     def run(self, update: Update, context: CallbackContext, user: User) -> bool:
-        chat_id = update.message.chat_id
-
-        if user.is_verified():
-            raise FallbackToMenu()
-
-        MakingVerificationRequest.ask_flat(update, context, user)
+        MakingVerificationRequest.catch_commerce(update, context, user)
+        # TODO: Собираем всё, что до этого нам прислал пользователь и говорим ему что мол вот всё. И кнопки "отправить заявку" или "отбой, всё сначала"
         return True

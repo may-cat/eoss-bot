@@ -29,5 +29,4 @@ from ..lib.check import Check
 
 class IsNotVerified(Check):
     def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
-        # TODO: ...
-        return False
+        return not user.is_verified()

@@ -28,16 +28,7 @@ class RevertPollAnswer(TGHandler):
         poll_id = answer.poll_id
         poll = Poll.objects.get(poll_id=poll_id)
         user_id = answer.user.id
-
-        try:
-            user = User.objects.get(user_id=user_id)
-        except User.DoesNotExist:
-            user = User(
-                user_id=user_id,
-                name=answer.user.name
-            )
-            user.save()
-
+        user = User.factory_on_telegram_message(update)
         Vote.objects.filter(
             poll=poll,
             user=user

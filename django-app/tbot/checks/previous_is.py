@@ -29,5 +29,10 @@ from ..lib.check import Check
 
 class PreviousIs(Check):
     def run(self, update: Update, context: CallbackContext, handler_type: object, step: dict, user: User, options: list=[]) -> bool:
+        print('check')
         user_state = user.get_dialog_state()
-        return user_state == options[0]
+        if ',' in options[0]:
+            variants = options[0].split(',')
+            return user_state in variants
+        else:
+            return user_state == options[0]

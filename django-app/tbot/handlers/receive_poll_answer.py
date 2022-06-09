@@ -30,16 +30,7 @@ class ReceivePollAnswer(TGHandler):
         poll = Poll.objects.get(poll_id=poll_id)
         user_id = answer.user.id
         poll_options = poll.get_options()
-
-        try:
-            user = User.objects.get(user_id=user_id)
-        except User.DoesNotExist:
-            user = User(
-                user_id=user_id,
-                name=answer.user.first_name+" "+answer.user.last_name
-            )
-            user.save()
-
+        user = User.factory_on_telegram_message(update)
         answer_id = answer.option_ids[0]
         answer_str = poll.get_options()[answer_id]
 

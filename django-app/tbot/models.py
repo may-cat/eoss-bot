@@ -1,6 +1,9 @@
 from django.db import models
 import json
 import logging
+from telegram import (
+    Update,
+)
 
 """
 Хранилище информации об объекте недвижимости
@@ -100,6 +103,45 @@ class User(models.Model):
         self.dialog_state = state
         self.save()
 
+    @staticmethod
+    def factory_on_telegram_message(update: Update):
+        print('factory_on_telegram_message')
+        print(update)
+
+        # get user id from telegram message
+        user_id = None
+        if hasattr(update, 'message') and hasattr(update.message, 'chat'):
+            user_id = update.message.chat.id
+        elif hasattr(update, 'poll_answer') and hasattr(update.poll_answer, 'user'):
+            user_id = update.poll_answer.user.id
+        else:
+            raise Exception("Почему-то нет айдишника юзера")
+
+        # Try to get user based on user_id or except — create it
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            # Get all info we can about user
+            name = "unknown"
+            if hasattr(update, "message"):
+                name = ""
+                if hasattr(update.message.from_user, 'first_name'):
+                    name = name + update.message.from_user.first_name + " "
+                if hasattr(update.message.from_user, 'last_name'):
+                    name = name + update.message.from_user.last_name
+            elif hasattr(update, 'poll_answer'):
+                name = update.poll_answer.user.name
+
+            print('name',name)
+
+            user = User(
+                user_id=user_id,
+                name=name,
+                verified=False,
+                dialog_state="start"
+            )
+            user.save()
+        return user
 
 """
 У кого какие доли в объектах недвижимости
@@ -215,3 +257,11 @@ class Vote(models.Model):
     def get_selected_vote_id(self):
         return self.selected_vote_id
 
+
+class VerificationRequest(models.Model):
+    user = models.ForeignKey(User, null=True, on_delete=models.DO_NOTHING)
+    section = models.TextField(default="")
+    flat = models.TextField(default="")
+    parking = models.TextField(default="")
+    storeroom = models.TextField(default="")
+    commerce = models.TextField(default="")

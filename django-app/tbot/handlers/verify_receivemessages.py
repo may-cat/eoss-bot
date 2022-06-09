@@ -28,7 +28,8 @@ class VerifyReceiveMessages(TGHandler):
     def run(self, update: Update, context: CallbackContext, user: User) -> bool:
         chat_id = update.message.chat_id
 
-        # TODO: ....
+        # TODO: Либо прилетела кнопка "отправить заявку" - тогда отправляем админу куда-то
+        # TODO: Либо прилетела кнопка "начать сначала"
 
         """Inform user about what this bot can do"""
         update.message.reply_text(
