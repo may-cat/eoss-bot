@@ -45,7 +45,7 @@ class EossDataRecieved(TGHandler):
         context.bot.send_message(
             chat_id,
             "Всё принято, сейчас запустим ЭОСС в группе " + section.get_title() +
-            "Чтобы узнать результаты — используйте команду /eoss_stats",
+            "Чтобы узнать результаты — используйте кнопку 'Результаты ЭОСС' в главном меню",
             parse_mode=ParseMode.HTML,
             reply_markup=ReplyKeyboardRemove()
         )

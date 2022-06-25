@@ -105,9 +105,6 @@ class User(models.Model):
 
     @staticmethod
     def factory_on_telegram_message(update: Update):
-        print('factory_on_telegram_message')
-        print(update)
-
         # get user id from telegram message
         user_id = None
         if hasattr(update, 'message') and hasattr(update.message, 'chat'):
@@ -123,16 +120,14 @@ class User(models.Model):
         except User.DoesNotExist:
             # Get all info we can about user
             name = "unknown"
-            if hasattr(update, "message"):
-                name = ""
-                if hasattr(update.message.from_user, 'first_name'):
-                    name = name + update.message.from_user.first_name + " "
-                if hasattr(update.message.from_user, 'last_name'):
-                    name = name + update.message.from_user.last_name
-            elif hasattr(update, 'poll_answer'):
-                name = update.poll_answer.user.name
-
-            print('name',name)
+            try:
+                name = User._extract_name(update.message.from_user)
+            except AttributeError:
+                pass
+            try:
+                name = User._extract_name(update.poll_answer.user)
+            except AttributeError:
+                pass
 
             user = User(
                 user_id=user_id,
@@ -142,6 +137,27 @@ class User(models.Model):
             )
             user.save()
         return user
+
+    @staticmethod
+    def _extract_name(user_data):
+        name = ""
+        try:
+            if user_data.username is not None:
+                name = name + user_data.username + " "
+        except AttributeError:
+            pass
+        try:
+            if user_data.first_name is not None:
+                name = name + user_data.first_name + " "
+        except AttributeError:
+            pass
+        try:
+            if user_data.last_name is not None:
+                name = name + user_data.last_name + " "
+        except AttributeError:
+            pass
+        return name
+
 
 """
 У кого какие доли в объектах недвижимости
