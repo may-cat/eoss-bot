@@ -1,6 +1,6 @@
 .idea
 local.env
-django-app/db.sqlite3
+db/db.sqlite3
 __pycache__
 tests-app/*.session
 tests-app/*.session-journal
@@ -13,6 +13,6 @@ config.md
 .vscode
 
 # Django
-django-app/db.sqlite3
+db/db.sqlite3
 
 

@@ -13,7 +13,7 @@ RUN set -x \
     && chown -R user:user /usr/src/app
 
 # uwsgi settings
-COPY --chown=user uwsgi.ini /etc/uwsgi.ini
+COPY --chown=user django-app/uwsgi.ini /etc/uwsgi.ini
 
 CMD ["uwsgi", "--ini", "/etc/uwsgi.ini"]
 EXPOSE 8000

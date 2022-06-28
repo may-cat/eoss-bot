@@ -1,19 +1,34 @@
-# This is a basic workflow to help you get started with Actions
+#
+#  На данный момент забили на
+#  1. Пуш в какой-то регистри — нахуй
+#  2. Stateless — нахуй
+#         В перспективе надо вытащить базу из sqlite в какой-то внешнюю базку
+#         И тогда один контейнер с python надо разбить на два: отдельно бот, отдельно веб-аппка - и обе общаются с внешней базкой
+#
+
+# TODO: отделить сценарии для прода и для теста
 name: CI
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  build_python:
+    runs-on: [self-hosted, linux]
+    steps:
+      - # TODO: сделать docker build — но сперва надо добиться на локальной машине, чтобы оно правильно собиралось
+
+  # TODO: прогнать автотесты перед деплоем в прод!
+
+  deploy_python:
+    runs-on: [self-hosted, linux]
+    steps:
+      - # TODO: потушить старый образ
+      - # TODO: запустить новый (с передачей секретных переменных окружения в контейнер)
+
   # This workflow contains a single job called "build"
-  deploy:
+  debug:
     # The type of runner that the job will run on
     runs-on: [self-hosted, linux]
     # Steps represent a sequence of tasks that will be executed as part of the job
