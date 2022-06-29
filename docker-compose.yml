@@ -49,7 +49,7 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: ~/db
+      device: /home/webtgbot/db
 
 networks:
   frontend:
