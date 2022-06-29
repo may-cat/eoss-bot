@@ -26,6 +26,7 @@ jobs:
       run: |
           env > local.env
           cat local.env
+          newgrp docker
           docker ps
     - name: "Build new container"
       run: docker-compose build
