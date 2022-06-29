@@ -20,11 +20,14 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
     - uses: actions/checkout@v3
+    - name: "Env file"
+      run: env > local.env
     - name: "Build new container"
       run: docker-compose build
 
   deploy_python:
     runs-on: [self-hosted, linux]
+    needs: build
     steps:
     - uses: actions/checkout@v3
     - name: "Stop all running containers"
