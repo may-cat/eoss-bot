@@ -27,7 +27,7 @@ jobs:
 
   deploy_python:
     runs-on: [self-hosted, linux]
-    needs: build
+    needs: build_python
     steps:
     - uses: actions/checkout@v3
     - name: "Stop all running containers"
