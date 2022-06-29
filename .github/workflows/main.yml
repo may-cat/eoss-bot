@@ -16,7 +16,7 @@ on:
   pull_request:
     branches: [ "master" ]
 env:
-  DOCKER_HOST: "127.0.0.1"
+  DOCKER_HOST: "unix:///var/run/docker.sock"
 jobs:
   build_python:
     runs-on: [self-hosted, linux]
