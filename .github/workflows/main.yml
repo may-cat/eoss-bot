@@ -25,9 +25,6 @@ jobs:
     - name: "Env file"
       run: |
           env > local.env
-#    - name: "Docker access"
-#      run: |
-#          newgrp docker
     - name: "Build new container"
       run: docker-compose build
 
