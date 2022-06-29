@@ -17,6 +17,7 @@ RUN set -x \
 
 # uwsgi settings
 COPY --chown=user django-app/uwsgi.ini /etc/uwsgi.ini
+COPY --chown=user static/ /usr/src/app/
 
 USER 0
 CMD ["supervisord", "-c", "/usr/src/app/supervisord.conf"]

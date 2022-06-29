@@ -7,7 +7,6 @@ services:
     container_name: django-app
     restart: always
     volumes:
-#      - static-files:/usr/src/app/static/:rw
       - db:/usr/src/app/db/:rw
     networks:
       - backend
