@@ -1,8 +1,11 @@
 FROM python:3.10
-
 # set work directory
 ADD django-app /usr/src/app/
 WORKDIR /usr/src/app
+
+RUN apt-get update
+RUN apt-get install -y supervisor
+RUN apt-get install -y nano
 
 # install dependencies
 RUN pip install -r requirements.txt
@@ -15,5 +18,6 @@ RUN set -x \
 # uwsgi settings
 COPY --chown=user django-app/uwsgi.ini /etc/uwsgi.ini
 
-CMD ["uwsgi", "--ini", "/etc/uwsgi.ini"]
+USER 0
+CMD ["supervisord", "-c", "/usr/src/app/supervisord.conf"]
 EXPOSE 8000

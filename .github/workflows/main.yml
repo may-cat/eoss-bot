@@ -7,6 +7,8 @@
 #
 
 # TODO: отделить сценарии для прода и для теста
+# TODO: прогнать автотесты перед деплоем в прод!
+# TODO: миграции
 name: CI
 on:
   push:
@@ -17,31 +19,34 @@ jobs:
   build_python:
     runs-on: [self-hosted, linux]
     steps:
-      - # TODO: сделать docker build — но сперва надо добиться на локальной машине, чтобы оно правильно собиралось
-
-  # TODO: прогнать автотесты перед деплоем в прод!
+    - uses: actions/checkout@v3
+    - name: "Build new container"
+      run: docker-compose build
 
   deploy_python:
     runs-on: [self-hosted, linux]
     steps:
-      - # TODO: потушить старый образ
-      - # TODO: запустить новый (с передачей секретных переменных окружения в контейнер)
-
-  # This workflow contains a single job called "build"
-  debug:
-    # The type of runner that the job will run on
-    runs-on: [self-hosted, linux]
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - name: Run a one-line script
-        run: echo Hello, world!
-      - name: Check where are we?
-        run: |
-          whoami
-          pwd
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
+    - uses: actions/checkout@v3
+    - name: "Stop all running containers"
+      run: docker-compose down
+    - name: "Run new"
+      run: docker-compose up -d
+#
+#  # This workflow contains a single job called "build"
+#  debug:
+#    # The type of runner that the job will run on
+#    runs-on: [self-hosted, linux]
+#    # Steps represent a sequence of tasks that will be executed as part of the job
+#    steps:
+#      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+#      - uses: actions/checkout@v3
+#      - name: Run a one-line script
+#        run: echo Hello, world!
+#      - name: Check where are we?
+#        run: |
+#          whoami
+#          pwd
+#      - name: Run a multi-line script
+#        run: |
+#          echo Add other actions to build,
 

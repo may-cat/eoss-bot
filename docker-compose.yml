@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   django-app:
-    user: "1000:1000"
+    user: root
     build: .
     container_name: django-app
     restart: always
