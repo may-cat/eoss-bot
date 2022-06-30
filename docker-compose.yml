@@ -43,7 +43,7 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: static
+      device: /home/webtgbot/static
   db:
     driver: local
     driver_opts:

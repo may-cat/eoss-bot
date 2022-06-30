@@ -51,6 +51,10 @@ jobs:
       run: docker-compose down
     - name: "Run migrations"
       run: docker-compose run django-app python3 /usr/src/app/manage.py migrate
+    - name: "Dirty update of static files"
+      run: |
+           rm -rf /home/webtgbot/static
+           cp -rf static /home/webtgbot/
     - name: "Run new"
       run: docker-compose up -d
 #
