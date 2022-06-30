@@ -41,12 +41,12 @@ jobs:
     - name: "Env file"
       run: |
           env > local.env
-          echo "API_KEY: ${{ secrets.API_KEY }}" >> local.env
-          echo "DATABASE_FILE: ${{ secrets.DATABASE_FILE }}" >> local.env
-          echo "DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> local.env
-          echo "DJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}" >> local.env
-          echo "DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}" >> local.env
-          echo "DJANGO_STATIC_ROOT: ${{ secrets.DJANGO_STATIC_ROOT }}" >> local.env
+          echo "API_KEY=${{ secrets.API_KEY }}" >> local.env
+          echo "DATABASE_FILE=${{ secrets.DATABASE_FILE }}" >> local.env
+          echo "DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> local.env
+          echo "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }}" >> local.env
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> local.env
+          echo "DJANGO_STATIC_ROOT=${{ secrets.DJANGO_STATIC_ROOT }}" >> local.env
     - name: "Stop all running containers"
       run: docker-compose down
     - name: "Run migrations"
