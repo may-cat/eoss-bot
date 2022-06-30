@@ -8,7 +8,6 @@
 #
 # TODO: отделить сценарии для прода и для теста
 # TODO: прогнать автотесты перед деплоем в прод!
-# TODO: миграции
 name: CI
 on:
   push:
@@ -38,6 +37,8 @@ jobs:
           env > local.env
     - name: "Stop all running containers"
       run: docker-compose down
+    - name: "Run migrations"
+      run: docker-compose run django-app python3 /usr/src/app/manage.py migrate
     - name: "Run new"
       run: docker-compose up -d
 #
