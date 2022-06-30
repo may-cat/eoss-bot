@@ -24,6 +24,12 @@ jobs:
     - name: "Env file"
       run: |
           env > local.env
+          echo "\nAPI_KEY: ${{ secrets.API_KEY }}" >> local.env
+          echo "\nDATABASE_FILE: ${{ secrets.DATABASE_FILE }}" >> local.env
+          echo "\nDJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> local.env
+          echo "\nDJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}" >> local.env
+          echo "\nDJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}" >> local.env
+          echo "\nDJANGO_STATIC_ROOT: ${{ secrets.DJANGO_STATIC_ROOT }}" >> local.env
     - name: "Build new container"
       run: docker-compose build
 
@@ -35,6 +41,12 @@ jobs:
     - name: "Env file"
       run: |
           env > local.env
+          echo "\nAPI_KEY: ${{ secrets.API_KEY }}" >> local.env
+          echo "\nDATABASE_FILE: ${{ secrets.DATABASE_FILE }}" >> local.env
+          echo "\nDJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> local.env
+          echo "\nDJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}" >> local.env
+          echo "\nDJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}" >> local.env
+          echo "\nDJANGO_STATIC_ROOT: ${{ secrets.DJANGO_STATIC_ROOT }}" >> local.env
     - name: "Stop all running containers"
       run: docker-compose down
     - name: "Run migrations"
